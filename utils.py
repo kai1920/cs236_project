@@ -183,4 +183,41 @@ def initial_data_cleanup(my_data,max_unk_percentage=MAX_UNK_PERCENTAGE):
     my_data = my_data[my_data['is_acceptable']]
     return my_data
 
+import pandas as pd
+from nltk.translate.bleu_score import sentence_bleu
+import itertools
 
+def calculate_test_bleu(df_generated, df_reference):
+    """
+    Calculate Test-BLEU score.
+    
+    :param df_generated: DataFrame with generated texts
+    :param df_reference: DataFrame with reference texts
+    :return: Average Test-BLEU score
+    """
+    scores = []
+    for gen_text, ref_text in zip(df_generated['text'], df_reference['text']):
+        reference = [ref_text.split()]
+        candidate = gen_text.split()
+        score = sentence_bleu(reference, candidate)
+        scores.append(score)
+
+    return sum(scores) / len(scores)
+
+def calculate_self_bleu(df_generated):
+    """
+    Calculate Self-BLEU score.
+    
+    :param df_generated: DataFrame with generated texts
+    :return: Average Self-BLEU score
+    """
+    texts = df_generated['text'].tolist()
+    scores = []
+    for i, gen_text in enumerate(texts):
+        others = texts[:i] + texts[i+1:]
+        references = [text.split() for text in others]
+        candidate = gen_text.split()
+        score = sentence_bleu(references, candidate)
+        scores.append(score)
+
+    return sum(scores) / len(scores)
