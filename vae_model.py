@@ -83,3 +83,11 @@ def vae_loss_function(x_decoded_mean, x, z_mean, z_log_var):
     kl_loss = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp(), dim=1)
     # print('worked')
     return xent_loss + kl_loss
+
+def vae_loss_function_beta(x_decoded_mean, x, z_mean, z_log_var,beta):
+    # Reconstruction loss
+    xent_loss = sequence_loss(x_decoded_mean, x, reduction='mean')
+    # KL divergence
+    kl_loss = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp(), dim=1)
+    # print('worked')
+    return xent_loss + beta*kl_loss
