@@ -115,3 +115,31 @@ def batch_generation(seeds, model, size=2,batch_size=32,latent_dim=32,min_seq_le
     new_data = pd.DataFrame({'sentences': sentences})
     new_data['is_abusive'] = True
     return new_data
+
+from scipy.spatial.distance import cosine
+def find_closest_embedding(embedding, embedding_matrix):
+    min_dist = float('inf')
+    closest_idx = -1
+    for idx, candidate_embedding in enumerate(embedding_matrix):
+        dist = cosine(embedding, candidate_embedding)
+        if dist < min_dist:
+            min_dist = dist
+            closest_idx = idx
+    return closest_idx
+
+def decode_embeddings(embeddings, model, tokenizer):
+    # Move model to CPU for inference
+    model.to('cpu')
+
+    # Get the embeddings for all tokens in the vocabulary
+    embedding_matrix = model.embeddings.word_embeddings.weight.detach().numpy()
+
+    decoded_sentences = []
+    for sequence in embeddings:
+        decoded_tokens = []
+        for token_emb in sequence:
+            closest_idx = find_closest_embedding(token_emb, embedding_matrix)
+            decoded_tokens.append(tokenizer.convert_ids_to_tokens(closest_idx))
+        decoded_sentences.append(' '.join(decoded_tokens))
+
+    return decoded_sentences
